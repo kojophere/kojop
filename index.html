@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-background {
+            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+        }
+        .link-card {
+            transition: all 0.3s ease;
+        }
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        #map {
+            height: 300px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <div class="gradient-background text-white py-12 px-4">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold mb-4">Link Tracker</h1>
+            <p class="text-lg mb-8">Create tracking links to monitor who clicks them and their exact location</p>
+            <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">Create a New Tracking Link</h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="destinationUrl" placeholder="Enter destination URL (e.g., https://example.com)" class="flex-grow p-3 rounded-lg bg-white bg-opacity-90 text-gray-800">
+                    <button id="generateLink" class="bg-white text-blue-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors">Generate Link</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Generated Links Section -->
+            <div>
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2">Your Tracking Links</h2>
+                <div id="linksList" class="space-y-4">
+                    <div class="bg-white link-card rounded-lg shadow p-4 opacity-0" id="sampleLink">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-semibold text-lg truncate">Sample Link</h3>
+                                <a href="#" target="_blank" class="text-blue-500 text-sm break-all">https://example.com/track/12345</a>
+                            </div>
+                            <button class="bg-gray-200 hover:bg-gray-300 rounded-full p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-500">Created: Just now • Clicks: 0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracking Data Section -->
+            <div>
+                <h2 class="text-2xl font-semibold mb-6 border-b pb-2">Tracking Data</h2>
+                <div id="trackingData" class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                        <div class="font-semibold">Latest Click Information</div>
+                    </div>
+                    
+                    <div id="noData" class="text-center py-12">
+                        <div class="mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium mb-2">No tracking data yet</h3>
+                        <p class="text-gray-500">Click data will appear here when someone follows your tracking links.</p>
+                    </div>
+
+                    <div id="dataDisplay" class="hidden">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <div class="text-sm text-gray-500">Time Accessed</div>
+                                <div id="timeAccessed" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Device</div>
+                                <div id="deviceType" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">IP Address</div>
+                                <div id="ipAddress" class="font-medium">-</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Location</div>
+                                <div id="location" class="font-medium">-</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-500 mb-2">Browser Information</div>
+                            <div id="browserInfo" class="font-medium">-</div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="text-sm text-gray-500 mb-2">Location Map</div>
+                            <div id="map"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        let trackingLinks = [];
+        let clickData = null;
+
+        // DOM elements
+        const destinationUrlInput = document.getElementById('destinationUrl');
+        const generateLinkBtn = document.getElementById('generateLink');
+        const linksList = document.getElementById('linksList');
+        const sampleLink = document.getElementById('sampleLink');
+        const trackingData = document.getElementById('trackingData');
+        const noData = document.getElementById('noData');
+        const dataDisplay = document.getElementById('dataDisplay');
+        
+        // Remove the sample link
+        sampleLink.remove();
+
+        // Generate a unique ID for tracking links
+        function generateUniqueId() {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
+
+        // Function to create a tracking link
+        function createTrackingLink(destinationUrl) {
+            const linkId = generateUniqueId();
+            const trackingUrl = `${window.location.origin}${window.location.pathname}?track=${linkId}&redirect=${encodeURIComponent(destinationUrl)}`;
+            
+            const now = new Date();
+            const formattedDate = now.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return {
+                id: linkId,
+                destination: destinationUrl,
+                trackingUrl: trackingUrl,
+                createdAt: now,
+                clicks: [],
+                displayDate: formattedDate
+            };
+        }
+
+        // Render all tracking links
+        function renderTrackingLinks() {
+            linksList.innerHTML = '';
+            
+            trackingLinks.forEach(link => {
+                const linkElement = document.createElement('div');
+                linkElement.className = 'bg-white link-card rounded-lg shadow p-4';
+                linkElement.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-semibold text-lg truncate">${link.destination.replace(/^https?:\/\//, '').split('/')[0]}</h3>
+                            <a href="${link.trackingUrl}" target="_blank" class="text-blue-500 text-sm break-all">${link.trackingUrl}</a>
+                        </div>
+                        <button class="bg-gray-200 hover:bg-gray-300 rounded-full p-2 copy-btn" data-url="${link.trackingUrl}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500">Created: ${link.displayDate} • Clicks: ${link.clicks.length}</div>
+                `;
+                linksList.appendChild(linkElement);
+            });
+
+            // Add click event listeners to copy buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const url = e.currentTarget.getAttribute('data-url');
+                    navigator.clipboard.writeText(url).then(() => {
+                        const originalHTML = e.currentTarget.innerHTML;
+                        e.currentTarget.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H4z"/></svg>';
+                        setTimeout(() => {
+                            e.currentTarget.innerHTML = originalHTML;
+                        }, 2000);
+                    });
+                });
+            });
+        }
+
+        // Display tracking data
+        function displayTrackingData(linkId, clickIndex) {
+            const link = trackingLinks.find(l => l.id === linkId);
+            if (!link || !link.clicks[clickIndex]) return;
+
+            clickData = link.clicks[clickIndex];
+            
+            noData.classList.add('hidden');
+            dataDisplay.classList.remove('hidden');
+
+            // Format time
+            const timeAccessed = new Date(clickData.timestamp).toLocaleString();
+            
+            // Update UI
+            document.getElementById('timeAccessed').textContent = timeAccessed;
+            document.getElementById('deviceType').textContent = clickData.device || 'Unknown';
+            document.getElementById('ipAddress').textContent = clickData.ip || 'Not available';
+            document.getElementById('browserInfo').textContent = clickData.browser || 'Unknown browser';
+            
+            if (clickData.location) {
+                document.getElementById('location').textContent = 
+                    `Approximate location: ${clickData.location.latitude.toFixed(4)}, ${clickData.location.longitude.toFixed(4)}`;
+                
+                // Load map
+                loadMap(clickData.location.latitude, clickData.location.longitude);
+            } else if (clickData.locationError) {
+                document.getElementById('location').textContent = `Location access denied (${clickData.locationError})`;
+                document.getElementById('map').innerHTML = '<div class="bg-gray-100 rounded-lg h-full flex items-center justify-center text-gray-500">Map unavailable</div>';
+            } else {
+                document.getElementById('location').textContent = 'Location not requested';
+                document.getElementById('map').innerHTML = '<div class="bg-gray-100 rounded-lg h-full flex items-center justify-center text-gray-500">No location data</div>';
+            }
+        }
+
+        // Load map (using Leaflet.js would be better for production)
+        function loadMap(lat, lng) {
+            const mapElement = document.getElementById('map');
+            mapElement.innerHTML = `<img src="https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=12&size=600x300&maptype=roadmap&markers=color:red%7C${lat},${lng}&key=YOUR_API_KEY" alt="Map showing location at latitude ${lat}, longitude ${lng}" class="w-full h-full object-cover rounded-lg">`;
+            
+            // Note: In a production app, you would use the Google Maps JavaScript API or Leaflet.js
+            // This is just a placeholder using static maps
+        }
+
+        // Check URL parameters for tracking
+        function checkTracking() {
+            const params = new URLSearchParams(window.location.search);
+            const trackId = params.get('track');
+            const redirectUrl = params.get('redirect');
+            
+            if (trackId && redirectUrl) {
+                // Find the tracking link
+                const trackingLink = trackingLinks.find(link => link.id === trackId);
+                if (!trackingLink) return;
+                
+                // Get user info
+                const timestamp = new Date();
+                const userAgent = navigator.userAgent;
+                
+                // Simple device detection
+                let deviceType = 'Desktop';
+                if (/Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)) {
+                    deviceType = 'Mobile';
+                } else if (/Tablet/i.test(userAgent)) {
+                    deviceType = 'Tablet';
+                }
+                
+                // Browser detection
+                let browser = 'Unknown';
+                if (userAgent.includes('Firefox')) {
+                    browser = 'Firefox';
+                } else if (userAgent.includes('Chrome')) {
+                    browser = 'Chrome';
+                } else if (userAgent.includes('Safari')) {
+                    browser = 'Safari';
+                } else if (userAgent.includes('Edg')) {
+                    browser = 'Edge';
+                } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+                    browser = 'Opera';
+                }
+                
+                // Collect data
+                const clickData = {
+                    timestamp: timestamp,
+                    device: deviceType,
+                    browser: browser,
+                    ip: null, // Would be set server-side in a real app
+                    location: null
+                };
+                
+                // Try to get geolocation with clear explanation
+                if (navigator.geolocation) {
+                    // Show alert so user understands why we're requesting location
+                    const locationConfirmed = confirm("This tracking link requires your location to proceed. Click OK to share your location (approximate area only).");
+                    
+                    if (locationConfirmed) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                clickData.location = {
+                                    latitude: position.coords.latitude,
+                                    longitude: position.coords.longitude,
+                                    accuracy: position.coords.accuracy
+                                };
+                                
+                                // Add to tracking link
+                                trackingLink.clicks.push(clickData);
+                                localStorage.setItem('trackingLinks', JSON.stringify(trackingLinks));
+                                
+                                // Redirect
+                                window.location.href = redirectUrl;
+                            },
+                        (error) => {
+                            // User-friendly error message
+                            alert("Location access was denied or unavailable. You'll still be redirected, but no location data will be recorded.");
+                            
+                            // Add basic tracking data without location
+                            clickData.locationError = error.message;
+                            trackingLink.clicks.push(clickData);
+                            localStorage.setItem('trackingLinks', JSON.stringify(trackingLinks));
+                            
+                            // Redirect
+                            window.location.href = redirectUrl;
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                } else {
+                    // Geolocation not supported
+                    trackingLink.clicks.push(clickData);
+                    localStorage.setItem('trackingLinks', JSON.stringify(trackingLinks));
+                    window.location.href = redirectUrl;
+                }
+            }
+        }
+
+        // Check for tracking on page load
+        checkTracking();
+
+        // Load any saved tracking links
+        function loadSavedLinks() {
+            const savedLinks = localStorage.getItem('trackingLinks');
+            if (savedLinks) {
+                trackingLinks = JSON.parse(savedLinks);
+                
+                // Convert string dates back to Date objects
+                trackingLinks.forEach(link => {
+                    link.createdAt = new Date(link.createdAt);
+                    link.clicks.forEach(click => {
+                        click.timestamp = new Date(click.timestamp);
+                    });
+                });
+                
+                renderTrackingLinks();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedLinks();
+            
+            // Generate tracking link button click
+            generateLinkBtn.addEventListener('click', () => {
+                const destinationUrl = destinationUrlInput.value.trim();
+                
+                if (!destinationUrl) {
+                    alert('Please enter a destination URL');
+                    return;
+                }
+                
+                // Validate URL
+                try {
+                    new URL(destinationUrl);
+                } catch (e) {
+                    alert('Please enter a valid URL (e.g., https://example.com)');
+                    return;
+                }
+                
+                const trackingLink = createTrackingLink(destinationUrl);
+                trackingLinks.unshift(trackingLink);
+                renderTrackingLinks();
+                
+                // Save to localStorage
+                localStorage.setItem('trackingLinks', JSON.stringify(trackingLinks));
+                
+                // Clear input
+                destinationUrlInput.value = '';
+            });
+            
+            // Allow pressing Enter in the input field
+            destinationUrlInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    generateLinkBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
